@@ -1,16 +1,52 @@
 import sys
+import pandas as pd
+from sqlalchemy import create_engine
 
 
 def load_data(messages_filepath, categories_filepath):
-    pass
+    # reads the data files into a pandas dataframe
+    messages = pd.read_csv(messages_filepath)
+    categories = pd.read_csv(categories_filepath)
+    
+    df = messages.merge(categories, on='id') # merges the 2 dfs into 1
+    
+    return df
 
 
 def clean_data(df):
-    pass
-
+    # split the categories column into many
+    categories = df.categories.str.split(";", expand=True)
+    
+    # takes one row to find column names
+    row = categories.iloc[0]
+    
+    # apply function to extract column names and rename the columns
+    categories.columns = row.apply(lambda x: x[0:-2])
+    
+    for column in categories:
+        # set each value to be the last character of the string
+        categories[column] = categories[column].apply(lambda x: x[-1])
+    
+        # convert column from string to numeric
+        categories[column] = categories[column].astype('int8')
+    
+    # drop the original categories column from `df`
+    df.drop(['categories'], axis=1, inplace=True)
+    
+    # concatenate the original dataframe with the new `categories` dataframe
+    df = pd.concat([df, categories], axis=1)
+    
+    # drop duplicates
+    df.drop_duplicates(inplace=True)
+    
+    return df
 
 def save_data(df, database_filename):
-    pass  
+    # create database engine
+    engine = create_engine('sqlite:///' + database_filename)
+    
+    # save the data into the database
+    df.to_sql('messages', engine, index=False, if_exists='replace')
 
 
 def main():
