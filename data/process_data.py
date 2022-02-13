@@ -39,6 +39,9 @@ def clean_data(df):
     # drop duplicates
     df.drop_duplicates(inplace=True)
     
+    # limit 'related' values to 1
+    df['related'] = df['related'].apply(lambda x: min(x, 1))
+    
     return df
 
 def save_data(df, database_filename):
