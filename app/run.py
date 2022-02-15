@@ -1,36 +1,51 @@
 import json
 import plotly
 import pandas as pd
+import re
 
-from nltk.stem import WordNetLemmatizer
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
+
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
 
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
-from sklearn.externals import joblib
+import joblib
 from sqlalchemy import create_engine
 
 
 app = Flask(__name__)
 
 def tokenize(text):
+    # put all letter to lower case
+    text = text.lower()
+    
+    # substitute everything that is not letters or numbers
+    text = re.sub('[^a-z 0-9]', ' ', text)
+    
+    # create tokens using nltk
     tokens = word_tokenize(text)
-    lemmatizer = WordNetLemmatizer()
-
-    clean_tokens = []
-    for tok in tokens:
-        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
-
-    return clean_tokens
+    
+    # load stopwords
+    stop = stopwords.words('english')
+    
+    # remove stopwords and lemmatize
+    tokens = [WordNetLemmatizer().lemmatize(word) for word in tokens 
+              if word not in stop]
+    
+    return tokens
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/DisasterResponse.db')
+df = pd.read_sql_table('messages', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("../models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -42,6 +57,12 @@ def index():
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
+    
+    # count true labeled columns to show most common categories
+    labels = df.drop(labels=['id', 'message', 'original', 'genre'], axis=1)
+    labels_name = labels.sum().sort_values(ascending=False).index
+    labels_count = labels.sum().sort_values(ascending=False).values
+    
     
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
@@ -63,8 +84,31 @@ def index():
                     'title': "Genre"
                 }
             }
-        }
+        },
+        
+        {
+            'data': [
+                Bar(
+                    x=labels_name,
+                    y=labels_count
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Labels',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Label"
+                }
+            }
+        },
     ]
+    
+    
+    
+    
     
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
