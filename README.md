@@ -1,4 +1,4 @@
-![Banner](https://github.com/italocosilva/disaster-response/tree/main/app/home-page.png)
+![Banner](https://github.com/italocosilva/disaster-response/blob/9295f02f7262a1bd5fa5bcf9bbb4f83bf82bce3e/app/home-page.png)
 
 # Disaster Response: Analyzing Messages from Disasters
 
