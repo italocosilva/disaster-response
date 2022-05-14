@@ -41,11 +41,11 @@ def tokenize(text):
     return tokens
 
 # load data
-engine = create_engine('sqlite:///../data/DisasterResponse.db')
-df = pd.read_sql_table('messages', engine)
+engine = create_engine('sqlite:///C:\\Users\\Italo\\Google Drive\\06. Data Science\\disaster-response\\data\\DisasterResponse.db')
+df = pd.read_sql('select * from messages', engine)
 
 # load model
-model = joblib.load("../models/classifier.pkl")
+model = joblib.load("C:\\Users\\Italo\\Google Drive\\06. Data Science\\disaster-response\\models\\classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
